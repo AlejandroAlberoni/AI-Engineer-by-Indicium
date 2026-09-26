@@ -1,7 +1,19 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from langchain.tools import tool
+
 from functools import lru_cache
 import pandas as pd
 from datetime import date, timedelta
+import os
+from tavily import TavilyClient
+
+
+tavily = TavilyClient(
+    api_key = os.getenv("TAVILY_API_KEY")
+)
 
 
 @lru_cache(maxsize=1)
@@ -12,7 +24,7 @@ def _load_df() -> pd.DataFrame:
 
 
 @tool
-def taxa_aumento_casos(data: str = str(date.today())) -> str:
+def taxa_aumento_casos(data: str) -> str:
     """
     Taxa de aumento de casos.
 
@@ -25,7 +37,17 @@ def taxa_aumento_casos(data: str = str(date.today())) -> str:
 
     total = (casos_data['CLASSI_FIN'] == 5).sum()
     taxa = total / len(casos_data)
-    return f"A taxa de aumento de casos é de {taxa * 100:.2f}%"
+
+    taxa = round(taxa * 100, 2)
+
+    result = {
+        "metric": "taxa_aumento_casos",
+        "value": taxa,
+        "unit": "%",
+        "date": data
+    }
+
+    return result
 
 @tool
 def taxa_mortalidade(data: str = str(date.today())) -> str:
@@ -43,7 +65,16 @@ def taxa_mortalidade(data: str = str(date.today())) -> str:
     casos = (casos_data['EVOLUCAO'] == 2).sum()
     taxa = casos / len(casos_data)
 
-    return f"A taxa de mortalidade por SRAG no dia {data} é de {taxa * 100:.2f}%"
+    taxa = round((taxa * 100), 2)
+
+    result = {
+        "metric": "taxa_mortalidade",
+        "value": taxa,
+        "unit": "%",
+        "date": data
+    }
+
+    return result
 
 @tool
 def taxa_ocupacao_UTI(data: str = str(date.today())) -> str:
@@ -61,7 +92,17 @@ def taxa_ocupacao_UTI(data: str = str(date.today())) -> str:
     ocupacao = (ocupacao_data["UTI"] == 1).sum()
 
     taxa = ocupacao / len(ocupacao_data)
-    return f"A taxa de ocupação das UTI's é de {taxa * 100:.2f}"
+
+    taxa = round((taxa * 100), 2)
+
+    result = {
+        "metric": "taxa_ocupacao_UTI",
+        "value": taxa,
+        "unit": "%",
+        "date": data
+    }
+
+    return result
 
 @tool
 def taxa_vacinacao_populacao(data: str = str(date.today())) -> str:
@@ -79,7 +120,17 @@ def taxa_vacinacao_populacao(data: str = str(date.today())) -> str:
     vacinados = (vacinados_data['VACINA_COV'] == 1).sum()
 
     taxa = vacinados / len(vacinados_data)
-    return f"A taxa de vacinação da população é de {taxa * 100:.2f}"
+
+    taxa = round((taxa * 100), 2)
+
+    result = {
+        "metric": "taxa_vacinacao_populacao",
+        "value": taxa,
+        "unit": "%",
+        "date": data
+    }
+
+    return result
 
 
 @tool
@@ -127,11 +178,13 @@ def numero_casos_ultimo_mes(data: str = str(date.today())) -> dict:
         for dia, casos in casos_diarios.items()
     }
 
-    return {
+    result = {
         "data_inicio": data_inicio.strftime("%Y-%m-%d"),
         "data_fim": data.strftime("%Y-%m-%d"),
         "casos_diarios": resultado
     }
+
+    return result
 
 
 @tool
@@ -180,8 +233,49 @@ def numero_mensal_casos_ultimo_ano(data: str = str(date.today())) -> dict:
         for mes, casos in casos_mensais.items()
     }
 
-    return {
+
+    result = {
         "data_inicio": inicio.strftime("%Y-%m-%d"),
         "data_fim": data.strftime("%Y-%m-%d"),
         "casos_mensais": resultado
     }
+
+    return result
+
+@tool
+def pesquisa_web(
+    query: str,
+    data_inicio: str,
+    data_fim: str,
+):
+    """
+    Pesquisa noticias na internet.
+
+    Use esta ferramenta para resgatar informações.
+
+    query:
+        Consulta que será pesquisada.
+
+    data_inicio:
+        Data inicial da pesquisa no formato YYYY-MM-DD
+
+    data_fim:
+        Data final da pesquisa no formato YYYY-MM-DD
+    """
+    response = tavily.search(
+        query=query,
+        start_date=data_inicio,
+        end_date=data_fim,
+        search_depth="basic",
+        max_results=4
+    )
+    result = [
+        {
+            "title": result["title"],
+            "url": result["url"],
+            "content": result["content"]
+        }
+        for result in response["results"]
+    ]
+
+    return result
