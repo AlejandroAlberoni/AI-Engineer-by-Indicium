@@ -42,3 +42,7 @@ As tools:
 - numero_casos_ultimo_mes
 - numero_mensal_casos_ultimo_ano
 - pesquisa_web  
+
+### Exemplo de saída
+
+O resultado final é um relatório pdf mostrando comentários e métricas. Você pode vê-lo [aqui](assets/relatorio_srag.pdf)
