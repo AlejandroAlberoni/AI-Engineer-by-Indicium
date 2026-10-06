@@ -74,7 +74,7 @@ def build_pdf(data: str, comentario: str, dados_graficos: dict) -> str:
     pdf.set_font("DejaVu", "B", 12)
     pdf.cell(0, 8, "Comentário", ln=True)
     pdf.set_font("DejaVu", "", 10)
-    pdf.multi_cell(0, 6, sanitizar(comentario))
+    pdf.multi_cell(0, 6, sanitizar(comentario), markdown=True)
     pdf.ln(4)
 
     pdf.set_font("DejaVu", "B", 12)
