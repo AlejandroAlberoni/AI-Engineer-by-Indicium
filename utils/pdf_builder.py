@@ -41,7 +41,10 @@ def _plot_chart(titulo: str, labels: list, values: list, path: Path) -> None:
     plt.close(fig)
 
 def sanitizar(texto: str) -> str:
-    return "?".join(c for c in texto if c in ("\n", "\t") or ord(c) in GLIFOS)
+    return "".join(
+        c if (c in ("\n", "\t") or ord(c) in GLIFOS) else "?"
+        for c in texto
+    )
 
 def build_pdf(data: str, comentario: str, dados_graficos: dict) -> str:
     run_id = uuid.uuid4().hex[:8]
