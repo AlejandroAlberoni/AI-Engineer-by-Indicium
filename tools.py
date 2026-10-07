@@ -24,30 +24,48 @@ def _load_df() -> pd.DataFrame:
 
 
 @tool
-def taxa_aumento_casos(data: str) -> str:
+def taxa_aumento_casos(data: str | None = None) -> dict:
     """
-    Taxa de aumento de casos.
+    Taxa de aumento (ou queda) do número de casos de SRAG em relação ao mês anterior.
 
-    Use esta ferramenta para responder perguntas sobre a taxa de aumento de casos da SRAG.
+    Compara os casos notificados do início do mês até a data informada com o
+    mesmo intervalo de dias do mês anterior. Valor positivo = aumento.
     """
-    df = _load_df()
-    casos_data = df[df['DT_NOTIFIC'] <= data]
+    df = _load_df().copy()
+    df["DT_NOTIFIC"] = pd.to_datetime(df["DT_NOTIFIC"], errors="coerce")
 
-    casos_data = casos_data.dropna(subset=['CLASSI_FIN'])
+    data = pd.to_datetime(data or date.today()).normalize()
 
-    total = (casos_data['CLASSI_FIN'] == 5).sum()
-    taxa = total / len(casos_data)
+    inicio_atual = data.replace(day=1)
+    inicio_anterior = inicio_atual - pd.DateOffset(months=1)
+    fim_anterior = min(
+        inicio_anterior + pd.Timedelta(days=data.day - 1),
+        inicio_atual - pd.Timedelta(days=1)
+    )
 
-    taxa = round(taxa * 100, 2)
+    um_dia = pd.Timedelta(days=1)
+    casos_atual = int(
+        ((df["DT_NOTIFIC"] >= inicio_atual) & (df["DT_NOTIFIC"] < data + um_dia)).sum()
+    )
+    casos_anterior = int(
+        ((df["DT_NOTIFIC"] >= inicio_anterior) & (df["DT_NOTIFIC"] < fim_anterior + um_dia)).sum()
+    )
 
-    result = {
+    taxa = (
+        round((casos_atual - casos_anterior) / casos_anterior * 100, 2)
+        if casos_anterior > 0 else None
+    )
+
+    return {
         "metric": "taxa_aumento_casos",
         "value": taxa,
         "unit": "%",
-        "date": data
+        "casos_periodo_atual": casos_atual,
+        "casos_periodo_anterior": casos_anterior,
+        "periodo_atual": f"{inicio_atual:%Y-%m-%d} a {data:%Y-%m-%d}",
+        "periodo_anterior": f"{inicio_anterior:%Y-%m-%d} a {fim_anterior:%Y-%m-%d}",
+        "date": data.strftime("%Y-%m-%d"),
     }
-
-    return result
 
 @tool
 def taxa_mortalidade(data: str = str(date.today())) -> str:
