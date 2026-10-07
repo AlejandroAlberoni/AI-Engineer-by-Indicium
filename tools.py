@@ -188,59 +188,38 @@ def numero_casos_ultimo_mes(data: str = str(date.today())) -> dict:
 
 
 @tool
-def numero_mensal_casos_ultimo_ano(data: str = str(date.today())) -> dict:
+def numero_mensal_casos_ultimo_ano(data: str | None = None) -> dict:
     """
     Número mensal de casos registrados durante os últimos 12 meses.
 
     Use esta ferramenta para responder perguntas sobre o número de casos registrados nos últimos 12 meses.
     """
-    df = _load_df()
+    df = _load_df().copy()
+    df["DT_NOTIFIC"] = pd.to_datetime(df["DT_NOTIFIC"], errors="coerce")
 
-    df["DT_NOTIFIC"] = pd.to_datetime(
-        df["DT_NOTIFIC"],
-        errors="coerce"
-    )
-
-    data = pd.to_datetime(data)
+    data = pd.to_datetime(data or date.today())
 
     fim = data.replace(day=1)
-
     inicio = fim - pd.DateOffset(months=11)
 
     casos_data = df[
         (df["DT_NOTIFIC"] >= inicio) &
-        (df["DT_NOTIFIC"] < fim + pd.DateOffset(months=1))
-    ]
+        (df["DT_NOTIFIC"] < data.normalize() + pd.Timedelta(days=1))  # até o fim do dia informado
+    ].copy()
 
-    casos_data = casos_data.copy()
     casos_data["mes"] = casos_data["DT_NOTIFIC"].dt.to_period("M")
-
     casos_mensais = casos_data.groupby("mes").size()
 
-    todos_os_meses = pd.period_range(
-        start=inicio,
-        end=fim,
-        freq="M"
-    )
+    todos_os_meses = pd.period_range(start=inicio, end=fim, freq="M")
+    casos_mensais = casos_mensais.reindex(todos_os_meses, fill_value=0)
 
-    casos_mensais = casos_mensais.reindex(
-        todos_os_meses,
-        fill_value=0
-    )
-
-    resultado = {
-        mes.strftime("%m-%Y"): int(casos)
-        for mes, casos in casos_mensais.items()
-    }
-
-
-    result = {
+    return {
         "data_inicio": inicio.strftime("%Y-%m-%d"),
         "data_fim": data.strftime("%Y-%m-%d"),
-        "casos_mensais": resultado
+        "casos_mensais": {
+            mes.strftime("%m-%Y"): int(casos) for mes, casos in casos_mensais.items()
+        },
     }
-
-    return result
 
 @tool
 def pesquisa_web(
