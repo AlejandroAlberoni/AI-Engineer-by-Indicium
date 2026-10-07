@@ -46,22 +46,23 @@ def sanitizar(texto: str) -> str:
         for c in texto
     )
 
-def build_pdf(data: str, comentario: str, dados_graficos: dict) -> str:
+def build_pdf(data: str, comentario: str, dados_graficos: dict | str) -> str:
     run_id = uuid.uuid4().hex[:8]
     work_dir = OUTPUT_DIR / run_id
     work_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. gera as imagens dos gráficos
-    chart_paths = {}
-    titulos = {
-        "casos_ultimo_mes": "Casos diários (últimos 30 dias)",
-        "casos_ultimo_ano": "Casos mensais (últimos 12 meses)",
-    }
-    for chave, dados in dados_graficos.items():
-        labels, values = _extract_series(dados)
-        img_path = work_dir / f"{chave}.png"
-        _plot_chart(titulos.get(chave, chave), labels, values, img_path)
-        chart_paths[chave] = img_path
+    if isinstance(dados_graficos, dict):
+        chart_paths = {}
+        titulos = {
+            "casos_ultimo_mes": "Casos diários (últimos 30 dias)",
+            "casos_ultimo_ano": "Casos mensais (últimos 12 meses)",
+        }
+        for chave, dados in dados_graficos.items():
+            labels, values = _extract_series(dados)
+            img_path = work_dir / f"{chave}.png"
+            _plot_chart(titulos.get(chave, chave), labels, values, img_path)
+            chart_paths[chave] = img_path
 
     # 2. monta o PDF
     pdf = FPDF()
@@ -82,9 +83,12 @@ def build_pdf(data: str, comentario: str, dados_graficos: dict) -> str:
 
     pdf.set_font("DejaVu", "B", 12)
     pdf.cell(0, 8, "Gráficos", ln=True)
-    for img_path in chart_paths.values():
-        pdf.image(str(img_path), w=170)
-        pdf.ln(4)
+    if isinstance(dados_graficos, dict):
+        for img_path in chart_paths.values():
+            pdf.image(str(img_path), w=170)
+            pdf.ln(4)
+    else:
+        pdf.cell(0, 8, f"{dados_graficos}", ln=True)
 
     pdf_path = work_dir / "relatorio.pdf"
     pdf.output(str(pdf_path))

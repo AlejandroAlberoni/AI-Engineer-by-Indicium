@@ -27,9 +27,9 @@ class SearchQueries(BaseModel):
     )
 
 class ResearcherState(ResearcherInput, ResearcherOutput):
-    metricas: dict
+    metricas: dict | str
     queries: list[MetricQueries]
-    web_results: list
+    web_results: list | str
 
 class RelatorioRequest(BaseModel):
     data: str
@@ -44,4 +44,4 @@ class RelatorioOutput(TypedDict):
  
 class RelatorioState(RelatorioInput, RelatorioOutput):
     comentario: str
-    dados_graficos: dict
+    dados_graficos: dict | str

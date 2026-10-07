@@ -14,7 +14,10 @@ GRAFICO_TOOLS = {
 }
 
 async def gerar_comentario(state: RelatorioState):
-    out = await researcher.ainvoke({"data": state["data"]})
+    try:
+        out = await researcher.ainvoke({"data": state["data"]})
+    except:
+        return {"comentario": "Não foi possível gerar o comentário."}
     return {"comentario": out["answer"]}
 
 async def coletar_dados_graficos(data: str) -> dict:
@@ -24,7 +27,11 @@ async def coletar_dados_graficos(data: str) -> dict:
     return dict(zip(GRAFICO_TOOLS, resultados))
 
 async def coletar_graficos(state: RelatorioState):
-    return {"dados_graficos": await coletar_dados_graficos(state["data"])}
+    try: 
+        dados = await coletar_dados_graficos(state["data"])
+    except:
+        {"dados_graficos": "Erro na coleta dos dados graficos"}
+    return {"dados_graficos": dados}
 
 
 async def montar_pdf(state: RelatorioState):
