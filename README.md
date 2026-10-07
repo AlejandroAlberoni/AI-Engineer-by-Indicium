@@ -30,18 +30,26 @@ A observabilidade foi totalmente apoiada no [Langfuse](https://langfuse.com/).
 
 Como o agente não teve liberdade de construir e executar queries, não houve necessidade de tratamento de PII(dados sensíveis).
 
-### Tools
-
 Apesar dos workflows serem deterministicos, as tools foram construídas com a possibilidade de implementação em agentes ReAct.
 
-As tools:
-- taxa_aumento_casos
-- taxa_mortalidade
-- taxa_ocupacao_UTI
-- taxa_vacinacao_populacao
-- numero_casos_ultimo_mes
-- numero_mensal_casos_ultimo_ano
-- pesquisa_web  
+### Descrição das Tools e Métricas
+
+O campo DT_NOTIFIC foi utilizado para calcular as porções pela data. As vezes alguma métrica possuia linhas com NaN, então foram removidos esses casos.
+O tratamento de dados se fez à nível de tool, e o calculo das metricas descritos na tabela a seguir: 
+
+| Métrica(Tool) | Como foi calculada |
+| --- | --- |
+| taxa_aumento_casos | Variação percentual dos casos notificados no mês da data informada (do dia 1 até a data) em relação ao mesmo intervalo do mês anterior. |
+| taxa_mortalidade | Percentual de casos com evolução para óbito entre os casos notificados até a data informada, considerando apenas os que têm desfecho registrado como óbito por SRAG, através do campo `EVOLUCAO`. |
+| taxa_ocupacao_UTI | Percentual de casos internados em UTI entre os casos notificados até a data informada. Mede a proporção de casos em UTI, não a ocupação de leitos. Utiliza o campo `UTI` para o cálculo.|
+| taxa_vacinacao_populacao | Percentual de casos com vacina contra `COVID-19` registrada entre os casos notificados até a data informada. Usa o campo `VACINA_COV`. Mede a proporção de vacinação *dentre os casos de SRAG*. |
+
+Demais tools:
+| Tool | Descrição |
+| --- | --- |
+| numero_casos_ultimo_mes | Número de casos diários registrados nos últimos 30 dias. |
+| numero_mensal_casos_ultimo_ano | Número mensal de casos registrados durante os últimos 12 meses. |
+| pesquisa_web | Utiliza a API da Tavily para pesquisar as notícias de SRAG pela web. |  
 
 ### Exemplo de saída
 

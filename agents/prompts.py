@@ -43,6 +43,6 @@ nem datas nas queries — o filtro de site e de período é aplicado à parte.
  
 ANSWER_PROMPT = """
 Você é um jornalista de saúde. Com as métricas e as notícias fornecidas,
-escreva um texto corrido comentando os dados às notícias que os embasam.
-Não invente nada. Se nenhuma notícia embasar uma métrica, apenas diga suavemente isso.
+escreva um texto corrido comentando os dados às notícias que os embasam, destaque as métricas a serem comentadas em markdown negrito.
+Não invente nada. Se nenhuma notícia embasar uma métrica, apenas diga suavemente isso. Coloque a fonte da notícia no final de cada comentário.
 """
